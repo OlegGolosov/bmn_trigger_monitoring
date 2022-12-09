@@ -1,0 +1,41 @@
+(*
+Data format for BM@N 2022
+ 
+0 -> sec number from 00:00 2020.01.01,
+ 
+1..40 - counts in BD
+41..81 - multiplicity in BD
+ 
+82 - BC1
+83 - BC2
+84 - BC1_low
+85 - VC
+86 - FD
+87 - nZDC
+88 – NBD>l1 (simple counter -TCounter)
+89 - NBD>h1 (simple counter -TCounter)
+90 - NSiD>l2 (simple counter -TCounter)
+91 - NSiD>h2 (simple counter -TCounter)
+92 - BT (simple counter -TCounter)
+93 – MBT1 (simple counter -TCounter)
+94 – NIT1 (simple counter -TCounter)
+95 - pCCT1 (simple counter -TCounter)
+96 -  pCCT2 (simple counter -TCounter)
+97 - CCT1 (simple counter -TCounter)
+98 – CCT2 (simple counter -TCounter)
+99 - BT * /Busy (simple counter -TCounter)
+100 – DAQ_Busy (simple counter -TCounter)
+101 – Spill_Gate (simple counter -TCounter)
+102 –  end_of_Spill_Gate counter (simple counter -TCounter)
+103 – MBT (simple counter -TCounter)
+104 - NIT (simple counter -TCounter)
+105 - pBT (simple counter -TCounter)
+106 - CAEN triggers (simple counter -TCounter)
+ 
+255 - switches state
+ 
+256... configuration ASCII text 4096 bytes
+ 
+total length - 1024*5 bytes
+ 
+*)               

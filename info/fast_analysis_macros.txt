@@ -1,0 +1,39 @@
+Event selection histograms (current spill/run or longer?)
+==========================
+
+Available signals (amplitude)  (???any selection???)
+ - beam selection:  BC1, BC2, VC, SiTracker
+ - fragment selection: FD, HODO, nFHCal (with calibration applied?) 
+ - multiplicity: BD, SiMD, tFHCal, Sci-Wall, TOF-400, TOF-700, DAQ event size (where do we get it?)
+
+2D correlation plots (based on digitized data)
+ - obvious correlation: 
+     FD vs HODO (sum of amplitudes)
+ - trigger event selection: 
+     FD vs BD (sum of amplitudes or number of strips)
+     FD vs nFHCal
+     FD vs SiMD 
+     BD vs nFHCal
+     BD vs SiMD
+     
+ - offline event characterization:
+    <fragment>      vs      <fragment>
+    <fragment>      vs  <multiplicity>
+    <multiplicity>  vs  <multiplicity> 
+
+
+Check of the trigger (current spill/run or longer?)
+====================
+
+Select event type via trigger mask and overlay histograms with two triggers (four triggers?):
+    CCT1 over BT  (central collision with low thresholds versus beam trigger) (will the thresholds be selected only based on daq speed?)
+    CCT2 over BT  (central collision with high thresholds versus beam trigger)
+    MBT  over BT  (minimum bias trigger versus beam trigger)
+    NIT  over BT  (non-interaction trigger versus beam trigger)
+
+1D historgrams: 
+    BC1 Amp, BC2 Amp, 
+    FD Amp, nFHCal, tFHCAL  
+    BD counts, BD sum, SiMD counts, SiMD sum (sum of amplitudes?)
+
+2D histograms listed above (<fr> vs <fr>, etc?)
