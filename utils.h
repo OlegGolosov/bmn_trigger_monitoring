@@ -39,7 +39,7 @@ vector <string> buildObjectList (vector <string> &objectNames, TDirectory *folde
     auto object = dynamic_cast <TKey*> (key) -> ReadObj ();
     string className = object -> ClassName();
     if (!(className.find("3") < className.size()) && 
-      (className.find("TH1")==0 || className.find("TProfile")==0 || className.find("TGraph")==0))
+      (className.find("TH2")==0 || className.find("TH1")==0 || className.find("TProfile")==0 || className.find("TGraph")==0))
     {
       string objectPath=Form("%s/%s", folderPath.c_str(), objectName.c_str());
       if(objectPath.find("/")==0)

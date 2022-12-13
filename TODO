@@ -1,3 +1,2 @@
-1. debug plotTriggers.C when data is available
-2. add th1 and th2 support to display.C
-3. add text (yaml?) config to display.C
+1. fill plotTriggers.C when data is available
+2. add text (yaml?) config to display.C

@@ -1,190 +1,84 @@
-using namespace ROOT;
-using namespace ROOT::Math;
-using namespace ROOT::RDF;
+#include "qaUtils.h"
 
-TChain* makeChain(string& filename, const char* treename) {
-  cout << "Adding files to chain:" << endl;
-  TChain *chain = new TChain(treename);
-  if (filename.rfind(".root") < filename.size())
-    chain->Add(filename.data());
-  else {
-    TFileCollection fc("fc", "", filename.c_str());
-    chain->AddFileInfoList((TCollection*)fc.GetList());
-  }
-  chain->ls();
-  return chain;
+int triggerPeak (TClonesArray digis)
+{
+  auto digit=(BmnTrigWaveDigit*)digis.At(0);
+  int peak=0;
+  if(digit) peak=digit->GetPeak();
+  return peak;
 }
 
-void addHist1d (unordered_map <string, RResultPtr<::TH1D >> &hists1d, pair <vector<string>, TH1DModel> &model)
+RVec<int> triggerPeaks (TClonesArray digis)
 {
-  auto m=model.second;
-  const char *v=model.first.at(0).c_str(), *w=model.first.at(1).c_str();
-  if (m.fName=="") 
-    m.fName=Form("h_%s", v);
-  if (m.fTitle=="") 
-    m.fTitle=Form("%s;%s;nEntries", v, v);
-  if (!w[0])
-    hists1d.emplace(m.fName, dd.Histo1D(m, v)); 
-  else
-  {
-    m.fName+=Form("_%s", w);
-    m.fTitle+=Form(" {%s}", w);
-    hists1d.emplace(m.fName, dd.Histo1D(m, v, w)); 
-  }
-}
-  
-void addHist2d (unordered_map <string, RResultPtr<::TH2D >> &hists2d, pair <vector<string>, TH1DModel> &model)
-{
-  auto m=model.second;
-  const char *v1=model.first.at(0).c_str(), *v2=model.first.at(1).c_str(), *w=model.first.at(2).c_str();
-  if (m.fName=="") 
-    m.fName=Form("h2_%s_%s", v1, v2);
-  if (m.fTitle=="") 
-    m.fTitle=Form("%s:%s;%s;%s;nEntries", v2, v1, v1, v2);
-  if (!w[0])
-    hists2d.emplace(m.fName, dd.Histo2D(m, v1, v2));
-  else
-  {
-    m.fName+=Form("_%s", w);
-    m.fTitle+=Form(" {%s}", w);
-    hists2d.emplace(m.fName, dd.Histo2D(m, v1, v2, w));
-  }
-}
-
-RVec<float> triggerPeak (TClonesArray digis)
-{
-  RVec<float>peaks; 
+  RVec<int>peaks; 
   for(auto d:digis)
     peaks.push_back(((BmnTrigWaveDigit*)d)->GetPeak());
   return peaks;
 }
 
-RVec<float> triggerIntegral (TClonesArray digis)
+RVec<int> triggerIntegrals (TClonesArray digis)
 {
-  RVec<float>peaks; 
+  RVec<int>integrals; 
   for(auto d:digis)
-    peaks.push_back(((BmnTrigWaveDigit*)d)->GetIntegral());
-  return peaks;
+    integrals.push_back(((BmnTrigWaveDigit*)d)->GetIntegral());
+  return integrals;
 }
 
-void plotTriggers (string inDigi="data/run8/sim.root", const char *out="data/run8/tree.root")
+void plotTriggers (string inDigi="mpd_run_Top_6573_ev1.root", const char *out="mpd_run_Top_6573_ev1.triggerQA.root")
 {
   TChain *chainDigi=makeChain(inDigi, "bmndata");
   cout << "Digi: " << chainDigi->GetEntries() << " events\n";
   ROOT::RDataFrame d(*chainDigi);
+  TFile outFile(out,"recreate");
 
   // read first Run Header if present
-  DigiRunHeader* digiHeader = (DigiRunHeader*) chainDigi->GetFile()->Get("DigiRunHeader");
-  if (!digiHeader)
+  DigiRunHeader* digiHeader = (DigiRunHeader*) chainDigi->GetCurrentFile()->Get("DigiRunHeader");
+  if (digiHeader)
   {
-    cout << "No digi header!!! Aborting!!!\n";
-    return;
+    digiHeader->Dump();
+    vector<ulong> runId={digiHeader->GetRunId()};
+    auto runStart=digiHeader->GetRunStartTime();
+    auto runEnd=digiHeader->GetRunEndTime();
+    outFile.WriteObject(digiHeader, "digiHeader"); 
+    outFile.WriteObject(&runId, "runId"); 
+    outFile.WriteObject(&runStart, "runStart"); 
+    outFile.WriteObject(&runEnd, "runEnd"); 
   }
-  digiHeader->Dump();
 
   auto dd=d
 //    .Range(0,1000)
     .Define("runId",[](FairEventHeader h){return h.GetRunId();}, {"BmnEventHeader."})
     .Define("evtId","BmnEventHeader.fEventId")
-    .Define("BC1times", "TQDC_BC1.fTime")
-    .Define("BC1amps", triggerPeaks, {"TQDC_BC1"})
-    .Define("BC2times", "TQDC_BC2.fTime")
-    .Define("BC2amps", triggerPeaks, {"TQDC_BC2"})
-    .Define("VCtimes", "TQDC_VETO.fTime")
-    .Define("VCamps", triggerPeaks, {"TQDC_VETO"})
-    .Define("BTtimes", "TQDC_BT.fTime")
-    .Define("BTamps", triggerPeaks, {"TQDC_BT"})
-    .Define("FDtimes", "TQDC_FD.fTime")
-    .Define("FDamps", triggerPeaks, {"TQDC_FD"})
-    .Define("bdModAmp", "BdDigit.fAmp")
-    .Define("bdModTime", "BdDigit.fTime")
-    .Define("bdGoodHit", "bdModTime>0")
-    .Define("bdNch", "Sum(bdGoodHit)")
-    .Define("bdSumAmp", "Sum(bdGoodHit*bdModAmp)")
-    .Define("simdModAmp", "SiMDDigit.fAmp")
-    .Define("simdModTime", "SiMDDigit.fTime")
-    .Define("simdGoodHit", "simdModTime>0")
-    .Define("simdNch", "Sum(simdGoodHit)")
-    .Define("simdSumAmp", "Sum(simdGoodHit*simdModAmp)")
-    .Define("bdSimdNch", "bdNch+simdNch")
-    .Define("bdSimdSumAmp", "bdSumAmp+simdSumAmp")
-    .Define("bdAmpSum", "Sum(bdModAmp*bdGoodHit)")
-    .Define("simdAmpSum", "Sum(simdModAmp*simdGoodHit)")
-    .Define("bdSimdAmpSum", "bdAmpSum+simdAmpSum")
-//    .Define("nHitsTof400", "")
-//    .Define("nHitsTof700", "")
-//    .Define("nHitsTof", "nHitsTof400+nHitsTof700")
-//    .Define("hodoModId", "")
-//    .Define("hodoModSide", "")
-    .Define("hodoModAmp", "HodoDigi.fAmpl")
-    .Define("hodoSumAmp", "Sum(hodoModAmp)")
-//    .Define("fhcalModX", "vector<float> x;for(auto &d:FHCalDigi) x.push_back(HodoDigi.GetX()); return x;")
-//    .Define("fhcalModY", "vector<float> y;for(auto &d:FHCalDigi) y.push_back(HodoDigi.GetY()); return y;")
-    .Define("fhcalModAmp", "FHCalDigi.fAmpl")
-    .Define("fhcalSumAmp", "Sum(fhcalModAmp)")
-//    .Define("MBT", "")
-//    .Define("CCT1", "")
-//    .Define("CCT2", "")
-//    .Define("NIT", "")
+    .Filter("evtId>0")
+    .Define("BC1peak", triggerPeak, {"TQDC_BC1S"})
+    .Define("BC2peak", triggerPeak, {"TQDC_BC2MS"})
+    .Define("VCpeak", triggerPeak, {"TQDC_VCS"})
+    .Define("FDpeak", triggerPeak, {"TQDC_FD"})
+    .Define("nFHCALpeak", triggerPeak, {"TQDC_nFHCal"})
+    .Define("BDamp", "Sum(BD.fAmp)")
+    .Define("BDcount", "Sum(BD.fAmp>0)")
+    .Define("BT", "BC1peak>0 && VCpeak<1000 && BC2peak>0")
+    .Define("MBT", "BT && FDpeak<1000")
+    .Define("CCT1", "BT && BDcount>5")
   ;
   dd.Foreach([](uint evtId){if (evtId % 1000 == 0) cout << "\r" << evtId;}, {"evtId"}); // progress display 
   cout << endl;
-  
-  vector<string> triggers={""/*"MBT","CCT1","CCT2","NIT"*/};
 
-  vector <pair <vector<string>, TH1DModel>> h1Models = {
-    {{"bdNch", ""},               {"", "Fired channels (BD);N_{channels};N_{events}",100,0,100}},
-    {{"simdNch", ""},             {"", "Fired channels (SiMD);N_{channels};N_{events}",100,0,100}},
-    {{"bdSimdNch", ""},           {"", "Fired channels (BD+SiMD);N_{channels};N_{events}",100,0,100}},
-    {{"bdAmpSum", ""},            {"", "Amplitude sum (BD);#sum amp;N_{events}",100,0,2200}},
-    {{"simdAmpSum", ""},          {"", "Amplitude sum (SiMD);#sum amp;N_{events}",100,0,2200}},
-    {{"bdSimdAmpSum", ""},        {"", "Amplitude sum (BD+SiMD);#sum amp;N_{events}",200,0,4400}},
-  };
-  
-  vector <pair <vector<string>, TH2DModel>> h2Models = {
-    {{"bdNch", "hodoSumAmp", ""},      {"", "Hodo amplitude sum vs fired channels in BD;N_{channels};amp",50,0,50,110,0,110}},
-    {{"bdSumAmp", "hodoSumAmp", ""},      {"", "Hodo amplitude sum vs BD amplitude sum;N_{channels};amp",50,0,50,110,0,110}},
-  };
-  
-  vector<ulong> runId={digiHeader->GetRunId()};
-  auto runStart=digiHeader->GetRunStartTime();
-  auto runEnd=digiHeader->GetRunEndTime();
+  for (auto &trigger:{"BT", "MBT", "CCT1"})
+  {
+    vector <pair <vector<string>, TH1DModel>> h1Models = {
+      {{"BC1peak", trigger},          {"", "", 0, 0, 0}},
+      {{"nFHCALpeak", trigger},          {"", "", 0, 0, 0}},
+      {{"BDcount", trigger},          {"", "", 40, 0, 40}},
+    };
+    
+    vector <pair <vector<string>, TH2DModel>> h2Models = {
+      {{"BDcount", "nFHCALpeak", trigger},    {"", "",40, 0, 40, 1, 0, 1}},
+    };
 
-  unordered_map <string, RResultPtr<::TH1D >> hists1d;
-  unordered_map <string, RResultPtr<::TH2D >> hists2d;
-  for(auto &trigger:triggers)
-  {
-    for (auto &model:h1Models)
-    {
-      model.first.at(1)=trigger;
-      addHist1d(hists1d, model);
-    }
-    for (auto &model:h2Models)
-    {
-      model.first.at(2)=trigger;
-      addHist2d(hists2d, model);
-    }
+    saveHists(dd, h1Models, h2Models, outFile.GetDirectory(""));
   }
-  
-  TFile fOut(out,"recreate");
-  f.WriteObject(digiHeader, "digiHeader"); 
-  f.WriteObject(&runId, "runId"); 
-  f.WriteObject(&runStart, "runStart"); 
-  f.WriteObject(&runEnd, "runEnd"); 
-  for (auto& hist:hists1d)
-  {
-    cout << hist.first << endl;
-    hist.second->Write();
-  }
-  for (auto& hist:hists2d)
-  {
-    cout << hist.first << endl;
-    hist.second->Write();
-  }
-  fOut.Close();
-
-//  hists.back()->DrawClone();
-//  hists2d.back()->DrawClone("colz");
+  outFile.Close();
 
 //  vector<string> definedNames;
 //  vector<string> toExclude={/*"scwallModPos","fhcalModPos","hodoModPos"*/};
@@ -197,5 +91,8 @@ void plotTriggers (string inDigi="data/run8/sim.root", const char *out="data/run
 //    if (!exclude)
 //      definedNames.push_back(definedName);
 //  }
-//  dd.Snapshot("t",out, definedNames);
+
+//  ROOT::RDF::RSnapshotOptions opts;
+//  opts.fMode = "update";
+//  dd.Snapshot("t",out, definedNames, opts);
 }
