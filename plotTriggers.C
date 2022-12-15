@@ -24,7 +24,15 @@ RVec<int> triggerIntegrals (TClonesArray digis)
   return integrals;
 }
 
-void plotTriggers (string inDigi="mpd_run_Top_6573_ev1.root", const char *out="mpd_run_Top_6573_ev1.triggerQA.root")
+RVec<int> FHCalDigiX(RVec<BmnFHCalDigi> digis)
+{
+  RVec<int> x;
+  for(auto &d:digis)
+    x.push_back(d.GetX());
+  return x;
+}
+
+void plotTriggers (string inDigi="mpd_run_Top_6723_ev0_p1.root", const char *out="mpd_run_Top_6723_ev0_p1.triggerQA.root")
 {
   TChain *chainDigi=makeChain(inDigi, "bmndata");
   cout << "Digi: " << chainDigi->GetEntries() << " events\n";
@@ -44,36 +52,66 @@ void plotTriggers (string inDigi="mpd_run_Top_6573_ev1.root", const char *out="m
     outFile.WriteObject(&runStart, "runStart"); 
     outFile.WriteObject(&runEnd, "runEnd"); 
   }
+  else 
+    cout << chainDigi->GetCurrentFile()->GetName();
 
   auto dd=d
 //    .Range(0,1000)
     .Define("runId",[](FairEventHeader h){return h.GetRunId();}, {"BmnEventHeader."})
     .Define("evtId","BmnEventHeader.fEventId")
-    .Filter("evtId>0")
-    .Define("BC1peak", triggerPeak, {"TQDC_BC1S"})
-    .Define("BC2peak", triggerPeak, {"TQDC_BC2MS"})
-    .Define("VCpeak", triggerPeak, {"TQDC_VCS"})
-    .Define("FDpeak", triggerPeak, {"TQDC_FD"})
-    .Define("nFHCALpeak", triggerPeak, {"TQDC_nFHCal"})
-    .Define("BDamp", "Sum(BD.fAmp)")
-    .Define("BDcount", "Sum(BD.fAmp>0)")
-    .Define("BT", "BC1peak>0 && VCpeak<1000 && BC2peak>0")
-    .Define("MBT", "BT && FDpeak<1000")
-    .Define("CCT1", "BT && BDcount>5")
+    .Define("ALL", "evtId>0")
+    .Filter("ALL")
+    .Define("BDmodId", "BD.fMod")
+    .Define("BDmodTime", "BD.fTime")
+    .Define("BDmodAmp", "BD.fAmp")
+    .Define("BDgoodHit", "abs(BDmodTime-400)<100")
+    .Define("BDcount", "Sum(BDgoodHit)")
+    .Define("BDamp", "Sum(BDmodAmp*BDgoodHit)")
+    .Define("SImodId", "SI.fMod")
+    .Define("SImodTime", "SI.fTime")
+    .Define("SImodAmp", "SI.fAmp")
+    .Define("SIgoodHit", "abs(SImodTime-450)<50")
+    .Define("SIcount", "Sum(SIgoodHit)")
+    .Define("SIamp", "Sum(SImodAmp*SIgoodHit)")
+    .Define("BDSIcount", "BDcount+SIcount")
+    .Define("tFHCal", "Sum(FHCalDigi.fSignal)")
+    .Define("FHCalDigiX", FHCalDigiX, {"FHCalDigi"})
+    .Define("nFHCal", "Sum(FHCalDigi.fSignal*FHCalDigiX<2)")
+    .Define("Hodo", "Sum(HodoDigi.fSignal)")
+//    .Define("BT", "BC1Speak>0 && VCpeak<1000 && BC2Speak>0")
+//    .Define("MBT", "BT && FDpeak<1000")
+//    .Define("CCT1", "BT && BDcount>5")
+//    .Define("CCT2", "BT && BDcount>5")
   ;
+  for (auto &det:{"BC1S", "BC1T", "BC1B", "BC2AS", "BC2AT", "BC2AB", "FD", "FDx10", "FD1S", "FD1T", "FD1B", "VCS", "VCT", "VCB", "nFHCal", "tFHCal"})
+    dd=dd
+      .Define(Form("TQDC_%speak", det), triggerPeak, {Form("TQDC_%s", det)})
+      .Define(Form("TQDC_%stime", det), Form("TQDC_%s.fTime", det));
+
+  for (auto &det:{"BC2AT", "BC2AB"})
+    dd=dd
+      .Define(Form("%samp", det), Form("%s.fAmp", det))
+      .Define(Form("%stime", det), Form("%s.fTime", det));
+
   dd.Foreach([](uint evtId){if (evtId % 1000 == 0) cout << "\r" << evtId;}, {"evtId"}); // progress display 
   cout << endl;
 
-  for (auto &trigger:{"BT", "MBT", "CCT1"})
+  for (auto &trigger:{"ALL"/*,"BT", "MBT", "CCT1", "CCT2"*/})
   {
     vector <pair <vector<string>, TH1DModel>> h1Models = {
-      {{"BC1peak", trigger},          {"", "", 0, 0, 0}},
-      {{"nFHCALpeak", trigger},          {"", "", 0, 0, 0}},
-      {{"BDcount", trigger},          {"", "", 40, 0, 40}},
+//      {{"TQDC_BC1Speak", trigger},          {"", "", 0, 0, 0}},
+//      {{"nFHCAL", trigger},          {"", "", 0, 0, 0}},
+//      {{"BDcount", trigger},          {"", "", 40, 0, 40}},
     };
-    
+
+    for (auto& name:dd.GetDefinedColumnNames())
+      h1Models.push_back({{name, trigger}, {"", "", 0, 0, 0}});
+
     vector <pair <vector<string>, TH2DModel>> h2Models = {
-      {{"BDcount", "nFHCALpeak", trigger},    {"", "",40, 0, 40, 1, 0, 1}},
+      {{"BDcount", "nFHCal", trigger},    {"", "", 40, 0, 40, 100, 0, 200}},
+      {{"BDcount", "tFHCal", trigger},    {"", "", 40, 0, 40, 100, 0, 1000}},
+      {{"BDcount", "Hodo", trigger},      {"", "", 40, 0, 40, 100, 0, 10000}},
+      {{"BDcount", "TQDC_FDpeak", trigger},      {"", "", 40, 0, 40, 100, 0, 6000}},
     };
 
     saveHists(dd, h1Models, h2Models, outFile.GetDirectory(""));

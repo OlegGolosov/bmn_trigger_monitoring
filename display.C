@@ -1,24 +1,5 @@
 #include "utils.h"
-
-struct rangeLine
-{
-  float y=0;
-  int color=2;
-  int width=2;
-  int style=1;
-};
-
-struct histSettings
-{
-  string name;
-  string drawOption="nostack"; 
-  vector<int> colors={1,2,3,4,5,6,7,8};
-  vector<rangeLine> lines={};
-  vector<int> markerStyles={0};
-  vector<int> markerSizes={0};
-  vector<int> lineStyles={1,2,3,4};
-  vector<int> lineWidths={3};
-};
+#include "histSettings.h"
 
 int thisOrLast(vector<int> v, int i) {return v.size()>i ? v.at(i) : v.back();}
 template <typename T, typename MT>
@@ -30,22 +11,15 @@ int nDivisions=705;
 int currentMarkerStyle=kOpenStar;
 float currentMarkerSize=1.5;
 
-void display(const char *trendFilePath="trends.root", const char *currentFilePath="current.root", const char* canvasName="triggerQA", const char* canvasTitle="Trigger QA")
+void display(const char *trendFilePath="trends.root", const char *currentFilePath="current.root", string histSettingName="trigger1d")
 {
-  vector <histSettings> hSettings=
-  {
-    {"time/h_Amp_(BC.*)_(RMS|mean)", "apl", {1,2,3,4,5,6,7,8}, {{27, 2, 3, 2}, {32, 3, 3, 2}, {25, 4, 3, 1}, {35, 5, 3, 1}}},
-    {"time/h_Amp_BC1_RMS", "apl", {2}, {{2.7, 2, 3, 2}, {3.2, 3, 3, 2}, {2.5, 4, 3, 1}, {3.5, 5, 3, 1}}},
-//  {"h_BDcount_(.*)", "nostack", {1,2,3,4,5}, {{2.7, 2, 3, 2}}},
-//  {"h_BC1peak_(.*)", "nostack", {1,2,3,4,5}, {{2.7, 2, 3, 2}}},
-//  {"h2_BDcount_nFHCALpeak_BT", "colz"},
-//  {"h2_BDcount_nFHCALpeak_MBT", "colz"},
-  };
-
+  auto hSettings=histSettingsMap.at(histSettingName);
   auto trendFile=new TFile(trendFilePath, "read");
   auto currentFile=new TFile(currentFilePath, "read");
   vector <string> histNames;
   buildObjectList(histNames, trendFile);
+  const char* canvasName=histSettingName.c_str();
+  const char* canvasTitle=histSettingName.c_str();
   TCanvas *c1 = new TCanvas(canvasName, canvasTitle, 50, 50, canvasWidth, canvasHeight);
   int nPads = hSettings.size();
   int nPadsx = int (ceil (sqrt (nPads)));
@@ -74,9 +48,11 @@ void display(const char *trendFilePath="trends.root", const char *currentFilePat
 template <typename T, typename MT>
 void drawPad(histSettings setting, vector<string> filteredNames, vector<vector <string>> captures, TFile *trendFile, TFile *currentFile)
 {
-  auto leg=new TLegend();
+  int nHists=filteredNames.size();
+  auto leg=new TLegend(0.85,1-0.07*nHists,.99,1);
+  leg->SetFillColor(0);
   auto multi=new MT(setting.name.c_str(), setting.name.c_str());
-  for (int j=0; j<filteredNames.size();j++)
+  for (int j=0; j<nHists;j++)
   {
     string name=filteredNames.at(j);
     int lineWidth=thisOrLast(setting.lineWidths, j);

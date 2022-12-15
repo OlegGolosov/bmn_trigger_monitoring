@@ -1,2 +1,2 @@
-1. fill plotTriggers.C when data is available
-2. add text (yaml?) config to display.C
+1. run display and update when necessary 
+2. add text (yaml?) config to display.C (currently in a header)
