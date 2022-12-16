@@ -32,7 +32,7 @@ RVec<int> FHCalDigiX(RVec<BmnFHCalDigi> digis)
   return x;
 }
 
-void plotTriggers (string inDigi="mpd_run_Top_6723_ev0_p1.root", const char *out="mpd_run_Top_6723_ev0_p1.triggerQA.root")
+void plotTriggers (string inDigi="digi.root", const char *out="qa.root")
 {
   TChain *chainDigi=makeChain(inDigi, "bmndata");
   cout << "Digi: " << chainDigi->GetEntries() << " events\n";
@@ -78,12 +78,13 @@ void plotTriggers (string inDigi="mpd_run_Top_6723_ev0_p1.root", const char *out
     .Define("FHCalDigiX", FHCalDigiX, {"FHCalDigi"})
     .Define("nFHCal", "Sum(FHCalDigi.fSignal*FHCalDigiX<2)")
     .Define("Hodo", "Sum(HodoDigi.fSignal)")
+//    .Define("ScWall", "Sum(ScWallDigi.fSignal)")
 //    .Define("BT", "BC1Speak>0 && VCpeak<1000 && BC2Speak>0")
 //    .Define("MBT", "BT && FDpeak<1000")
 //    .Define("CCT1", "BT && BDcount>5")
 //    .Define("CCT2", "BT && BDcount>5")
   ;
-  for (auto &det:{"BC1S", "BC1T", "BC1B", "BC2AS", "BC2AT", "BC2AB", "FD", "FDx10", "FD1S", "FD1T", "FD1B", "VCS", "VCT", "VCB", "nFHCal", "tFHCal"})
+  for (auto &det:{"BC1S", "BC1T", "BC1B", "BC2AS", "BC2AT", "BC2AB", "FD", "FDx10", "VCS", "VCT", "VCB", "nFHCal", "tFHCal"})
     dd=dd
       .Define(Form("TQDC_%speak", det), triggerPeak, {Form("TQDC_%s", det)})
       .Define(Form("TQDC_%stime", det), Form("TQDC_%s.fTime", det));
@@ -98,6 +99,9 @@ void plotTriggers (string inDigi="mpd_run_Top_6723_ev0_p1.root", const char *out
 
   for (auto &trigger:{"ALL"/*,"BT", "MBT", "CCT1", "CCT2"*/})
   {
+    int nBins=100;
+    float HodoMax=7000, TQDC_FDMax=6000, tFHCalMax=1000, nFHCalMax=200, SIampMax=11000, BDampMax=500;
+
     vector <pair <vector<string>, TH1DModel>> h1Models = {
 //      {{"TQDC_BC1Speak", trigger},          {"", "", 0, 0, 0}},
 //      {{"nFHCAL", trigger},          {"", "", 0, 0, 0}},
@@ -108,11 +112,35 @@ void plotTriggers (string inDigi="mpd_run_Top_6723_ev0_p1.root", const char *out
       h1Models.push_back({{name, trigger}, {"", "", 0, 0, 0}});
 
     vector <pair <vector<string>, TH2DModel>> h2Models = {
-      {{"BDcount", "nFHCal", trigger},    {"", "", 40, 0, 40, 100, 0, 200}},
-      {{"BDcount", "tFHCal", trigger},    {"", "", 40, 0, 40, 100, 0, 1000}},
-      {{"BDcount", "Hodo", trigger},      {"", "", 40, 0, 40, 100, 0, 10000}},
-      {{"BDcount", "TQDC_FDpeak", trigger},      {"", "", 40, 0, 40, 100, 0, 6000}},
-    };
+      {{"BDmodId", "BDmodAmp", trigger},    {"", "", 40, 0, 40, nBins, 0, 50}},
+      {{"SImodId", "SImodAmp", trigger},    {"", "", 64, 0, 64, nBins, 0, 250}},
+      {{"BDcount", "nFHCal", trigger},    {"", "", 40, 0, 40, nBins, 0, nFHCalMax}},
+      {{"BDcount", "tFHCal", trigger},    {"", "", 40, 0, 40, nBins, 0, nFHCalMax}},
+      {{"BDcount", "Hodo", trigger},      {"", "", 40, 0, 40, nBins, 0, HodoMax}},
+      {{"BDcount", "TQDC_FDpeak", trigger},      {"", "", 40, 0, 40, nBins, 0, TQDC_FDMax}},
+      {{"BDcount", "Hodo", trigger}, {"", "", 40, 0, 40, nBins, 0, HodoMax}},
+      {{"BDcount", "tFHCal", trigger}, {"", "", 40, 0, 40, nBins, 0, tFHCalMax}},
+      {{"BDcount", "nFHCal", trigger}, {"", "", 40, 0, 40, nBins, 0, nFHCalMax}},
+      {{"BDcount", "TQDC_FDpeak", trigger}, {"", "", 40, 0, 40, nBins, 0, TQDC_FDMax}},
+      {{"BDamp", "Hodo", trigger}, {"", "",   nBins, 0, BDampMax, nBins, 0, HodoMax}},
+      {{"BDamp", "tFHCal", trigger}, {"", "", nBins, 0, BDampMax, nBins, 0, tFHCalMax}},
+      {{"BDamp", "nFHCal", trigger}, {"", "", nBins, 0, BDampMax, nBins, 0, nFHCalMax}},
+      {{"BDamp", "TQDC_FDpeak", trigger}, {"", "", nBins, 0, BDampMax, nBins, 0, TQDC_FDMax}},
+      {{"SIcount", "Hodo", trigger}, {"", "", 64, 0, 64, nBins, 0, HodoMax}},
+      {{"SIcount", "tFHCal", trigger}, {"", "", 64, 0, 64, nBins, 0, tFHCalMax}},
+      {{"SIcount", "nFHCal", trigger}, {"", "", 64, 0, 64, nBins, 0, nFHCalMax}},
+      {{"SIcount", "TQDC_FDpeak", trigger}, {"", "", 64, 0, 64, nBins, 0, TQDC_FDMax}},
+      {{"SIamp", "Hodo", trigger}, {"", "",   nBins, 0, SIampMax, nBins, 0, HodoMax}},
+      {{"SIamp", "tFHCal", trigger}, {"", "", nBins, 0, SIampMax, nBins, 0, tFHCalMax}},
+      {{"SIamp", "nFHCal", trigger}, {"", "", nBins, 0, SIampMax, nBins, 0, nFHCalMax}},
+      {{"SIamp", "TQDC_FDpeak", trigger}, {"", "", 40, 0, SIampMax, nBins, 0, TQDC_FDMax}},
+      {{"tFHCal", "Hodo", trigger}, {"", "", nBins, 0, tFHCalMax, nBins, 0, HodoMax}},
+      {{"nFHCal", "Hodo", trigger}, {"", "", nBins, 0, nFHCalMax, nBins, 0, HodoMax}},
+      {{"TQDC_FDpeak", "Hodo", trigger}, {"", "", 40, 0, 40, nBins, 0, HodoMax}},
+      {{"TQDC_FDpeak", "tFHCal", trigger}, {"", "", 40, 0, 40, nBins, 0, tFHCalMax}},
+      {{"TQDC_FDpeak", "nFHCal", trigger}, {"", "", 40, 0, 40, nBins, 0, nFHCalMax}},
+      {{"tFHCal", "nFHCal", trigger}, {"", "", 40, 0, tFHCalMax, nBins, 0, nFHCalMax}},
+    };                                                              
 
     saveHists(dd, h1Models, h2Models, outFile.GetDirectory(""));
   }

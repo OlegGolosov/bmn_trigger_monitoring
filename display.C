@@ -11,7 +11,7 @@ int nDivisions=705;
 int currentMarkerStyle=kOpenStar;
 float currentMarkerSize=1.5;
 
-void display(const char *trendFilePath="trends.root", const char *currentFilePath="current.root", string histSettingName="trigger1d")
+void display(const char *trendFilePath="qa.root", string histSettingName="beamTriggerTimes", const char *currentFilePath="")
 {
   auto hSettings=histSettingsMap.at(histSettingName);
   auto trendFile=new TFile(trendFilePath, "read");
@@ -51,7 +51,8 @@ void drawPad(histSettings setting, vector<string> filteredNames, vector<vector <
   int nHists=filteredNames.size();
   auto leg=new TLegend(0.85,1-0.07*nHists,.99,1);
   leg->SetFillColor(0);
-  auto multi=new MT(setting.name.c_str(), setting.name.c_str());
+  auto firstObj=dynamic_cast<T*>(trendFile->Get(filteredNames.at(0).c_str()));
+  auto multi=new MT(setting.name.c_str(), Form("%s;%s;%s", setting.name.c_str(), firstObj->GetXaxis()->GetTitle(), firstObj->GetYaxis()->GetTitle()));
   for (int j=0; j<nHists;j++)
   {
     string name=filteredNames.at(j);
@@ -108,4 +109,10 @@ void drawPad(histSettings setting, vector<string> filteredNames, vector<vector <
     line->SetLineStyle(ls.style);
     line->Draw("same");
   }
+  if(setting.log.find("x")<setting.log.size()) 
+    gPad->SetLogx();
+  if(setting.log.find("y")<setting.log.size()) 
+    gPad->SetLogy();
+  if(setting.log.find("z")<setting.log.size()) 
+    gPad->SetLogz();
 }
