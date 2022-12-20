@@ -4,7 +4,7 @@
 . /cvmfs/nica.jinr.ru/centos7/bmnroot/dev/bmnroot_config.sh
  
 rawPath=/eos/nica/bmn/exp/raw/run8/beam/BMN_2022
-lastUnneededRawFile=/eos/nica/bmn/exp/raw/run8/beam/BMN_2022/mpd_run_Top_6784_ev1_p2.data
+firstRawFile=/eos/nica/bmn/exp/raw/run8/beam/BMN_2022/mpd_run_Top_6705_ev0_p0.data
 digiPath=/scratch2/ogolosov/bmndata/run8/digi
 qaPath=/scratch2/ogolosov/bmndata/run8/qa/trigger
 decoderMacro=BmnDataToRoot.C
@@ -26,7 +26,8 @@ touch $listDigiPrev
 
 while [ true ];do
   #raw to digi
-  find $rawPath -name '*.data' -newer $lastUnneededRawFile > $listRaw
+  echo $firstRawFile > $listRaw
+  find $rawPath -name '*.data' -newer $firstRawFile >> $listRaw
   for rawFile in $(cat $listRaw);do
     digiFile=$digiPath/$(basename $rawFile)
     digiFile=${digiFile/\.data/.root}
