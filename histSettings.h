@@ -22,66 +22,95 @@ struct histSettings
 map <string, vector <histSettings>> 
 histSettingsMap=
 {
-  {"beamTriggerTimes", {
-    {"h_TQDC_BC1(.*)time_ALL", "nostack", ""},
-    {"h_TQDC_BC2A(.*)time_ALL", "nostack", ""},
-    {"h_TQDC_VC(.*)time_ALL", "nostack", ""},
-    {"h_TQDC_FD(.*)time_ALL", "nostack", ""}, 
+  {"beamTriggerTimes_BT", {
+    {"h_TQDC_BC1(.*)time_BT", "nostack", "y"},
+    {"h_TQDC_BC2A(.*)time_BT", "nostack", "y"},
+    {"h_TQDC_VC(.*)time_BT", "nostack", "y"},
+    {"h_TQDC_FD(.*)time_BT", "nostack", "y"}, 
   }},
-  {"beamTriggerAmps", {
-    {"h_TQDC_BC1(.*)peak_ALL", "nostack", ""},
-    {"h_TQDC_BC2A(.*)peak_ALL", "nostack", ""},
-    {"h_TQDC_VC(.*)peak_ALL", "nostack", ""},
-    {"h_TQDC_FD(.*)peak_ALL", "nostack", ""},
+  {"beamTriggerAmps_BT", {
+    {"h_TQDC_BC1(.*)peak_BT", "nostack", ""},
+    {"h_TQDC_BC2A(.*)peak_BT", "nostack", ""},
+    {"h_TQDC_VC(.*)peak_BT", "nostack", ""},
+    {"h_TQDC_FD(.*)peak_BT", "nostack", ""},
   }},
-  {"bdSiTimeCount", {
-    {"h_BDmodTime_ALL", "nostack", ""},
-    {"h_SImodTime_ALL", "nostack", ""},
-    {"h_BDmodAmp_ALL", "nostack", ""},
-    {"h_SImodAmp_ALL", "nostack", ""},
-    {"h_BDcount_ALL", "nostack", ""},
-    {"h_SIcount_ALL", "nostack", ""},
+  {"bdSiTimeCount_BT", {
+    {"h_BDmodTime_BT", "nostack", "y"},
+    {"h_BDmodAmp_BT", "nostack", "y"},
+    {"h_BDcount_BT", "nostack", "y"},
+    {"h_SImodTime_BT", "nostack", "y"},
+    {"h_SImodAmp_BT", "nostack", "y"},
+    {"h_SIcount_BT", "nostack", "y"},
   }},
-  {"bdAmps", {
-    {"h_BDmodId_BDmodAmp_ALL", "", "unfoldy"},
+  {"bdAmps_BT", {
+    {"h2_BDmodId_BDmodAmp_BT", "unfoldy", ""},
   }},
-  {"siAmps", {
-    {"h_SImodId_SImodAmp_ALL", "", "unfoldy"},
+  {"siAmps_BT", {
+    {"h2_SImodId_SImodAmp_BT", "unfoldy", ""},
   }},
-  {"BDcountVsFW", {
-    {"h2_BDcount_Hodo_ALL", "colz", ""},
-    {"h2_BDcount_tFHCal_ALL", "colz", ""},
-    {"h2_BDcount_nFHCal_ALL", "colz", ""},
-    {"h2_BDcount_TQDC_FDpeak_ALL", "colz", ""},
+  {"BDcountVsFW_BT", {
+    {"h2_BDcount_Hodo_BT", "colz", "z"},
+    {"h2_BDcount_tFHCal_BT", "colz", "z"},
+    {"h2_BDcount_nFHCal_BT", "colz", "z"},
+    {"h2_BDcount_TQDC_FDpeak_BT", "colz", "z"},
   }},
-  {"BDampVsFW", {
-    {"h2_BDamp_Hodo_ALL", "colz", ""},
-    {"h2_BDamp_tFHCal_ALL", "colz", ""},
-    {"h2_BDamp_nFHCal_ALL", "colz", ""},
-    {"h2_BDamp_TQDC_FDpeak_ALL", "colz", ""},
+  {"BDampVsFW_BT", {
+    {"h2_BDamp_Hodo_BT", "colz", "z"},
+    {"h2_BDamp_tFHCal_BT", "colz", "z"},
+    {"h2_BDamp_nFHCal_BT", "colz", "z"},
+    {"h2_BDamp_TQDC_FDpeak_BT", "colz", "z"},
   }},
-  {"SIcountVsFW", {
-    {"h2_SIcount_Hodo_ALL", "colz", ""},
-    {"h2_SIcount_tFHCal_ALL", "colz", ""},
-    {"h2_SIcount_nFHCal_ALL", "colz", ""},
-    {"h2_SIcount_TQDC_FDpeak_ALL", "colz", ""},
+  {"SIcountVsFW_BT", {
+    {"h2_SIcount_Hodo_BT", "colz", "z"},
+    {"h2_SIcount_tFHCal_BT", "colz", "z"},
+    {"h2_SIcount_nFHCal_BT", "colz", "z"},
+    {"h2_SIcount_TQDC_FDpeak_BT", "colz", "z"},
   }},
-  {"SIampVsFW", {
-    {"h2_SIamp_Hodo_ALL", "colz", ""},
-    {"h2_SIamp_tFHCal_ALL", "colz", ""},
-    {"h2_SIamp_nFHCal_ALL", "colz", ""},
-    {"h2_SIamp_TQDC_FDpeak_ALL", "colz", ""},
+  {"SIampVsFW_BT", {
+    {"h2_SIamp_Hodo_BT", "colz", "z"},
+    {"h2_SIamp_tFHCal_BT", "colz", "z"},
+    {"h2_SIamp_nFHCal_BT", "colz", "z"},
+    {"h2_SIamp_TQDC_FDpeak_BT", "colz", "z"},
   }},
-  {"FWvsFW", {
-    {"h2_tFHCal_Hodo_ALL", "colz", ""},
-    {"h2_nFHCal_Hodo_ALL", "colz", ""},
-    {"h2_TQDC_FD_Hodo_ALL", "colz", ""},
-    {"h2_TQDC_FD_tFHCal", "colz", ""},
-    {"h2_TQDC_FD_nFHCal", "colz", ""},
-    {"h2_tFHCal_nFHCal", "colz", ""},
+  {"FWvsFW_BT", {
+    {"h2_tFHCal_Hodo_BT", "colz", "z"},
+    {"h2_nFHCal_Hodo_BT", "colz", "z"},
+    {"h2_TQDC_FDpeak_Hodo_BT", "colz", "z"},
+    {"h2_TQDC_FDpeak_tFHCal", "colz", "z"},
+    {"h2_TQDC_FDpeak_nFHCal", "colz", "z"},
+    {"h2_tFHCal_nFHCal", "colz", "z"},
   }},
-  {"trends", {
-    {"time/h_Amp_(BC.*)_(RMS|mean)", "apl", "", {1,2,3,4,5,6,7,8}, {{27, 2, 3, 2}, {32, 3, 3, 2}, {25, 4, 3, 1}, {35, 5, 3, 1}}},
-    {"time/h_Amp_BC1_RMS", "apl", "", {2}, {{2.7, 2, 3, 2}, {3.2, 3, 3, 2}, {2.5, 4, 3, 1}, {3.5, 5, 3, 1}}},
+  {"TOFvsFW_BT", {
+    {"h2_nTOF400_TQDC_FDpeak_BT", "colz", "z"},
+    {"h2_nTOF400_tFHCal_BT", "colz", "z"},
+    {"h2_nTOF400_nFHCal_BT", "colz", "z"},
+    {"h2_nTOF700_TQDC_FDpeak_BT", "colz", "z"},
+    {"h2_nTOF700_tFHCal_BT", "colz", "z"},
+    {"h2_nTOF700_nFHCal_BT", "colz", "z"},
   }},
+  {"TOF700vsFD", {
+    {"h2_nTOF700_TQDC_FDpeak_BT", "colz", "z"},
+    {"h2_nTOF700_TQDC_FDpeak_NiT", "colz", "z"},
+    {"h2_nTOF700_TQDC_FDpeak_MBT", "colz", "z"},
+    {"h2_nTOF700_TQDC_FDpeak_CCT1", "colz", "z"},
+    {"h2_nTOF700_TQDC_FDpeak_CCT2", "colz", "z"},
+  }},
+  {"TOF400vsFD", {
+    {"h2_nTOF400_TQDC_FDpeak_BT", "colz", "z"},
+    {"h2_nTOF400_TQDC_FDpeak_NiT", "colz", "z"},
+    {"h2_nTOF400_TQDC_FDpeak_MBT", "colz", "z"},
+    {"h2_nTOF400_TQDC_FDpeak_CCT1", "colz", "z"},
+    {"h2_nTOF400_TQDC_FDpeak_CCT2", "colz", "z"},
+  }},
+  {"DCHvsFD", {
+    {"h2_nDCH_TQDC_FDpeak_BT", "colz", "z"},
+    {"h2_nDCH_TQDC_FDpeak_NiT", "colz", "z"},
+    {"h2_nDCH_TQDC_FDpeak_MBT", "colz", "z"},
+    {"h2_nDCH_TQDC_FDpeak_CCT1", "colz", "z"},
+    {"h2_nDCH_TQDC_FDpeak_CCT2", "colz", "z"},
+  }},
+//  {"trends", {
+//    {"time/h_Amp_(BC.*)_(RMS|mean)", "apl", "", {1,2,3,4,5,6,7,8}, {{27, 2, 3, 2}, {32, 3, 3, 2}, {25, 4, 3, 1}, {35, 5, 3, 1}}},
+//    {"time/h_Amp_BC1_RMS", "apl", "", {2}, {{2.7, 2, 3, 2}, {3.2, 3, 3, 2}, {2.5, 4, 3, 1}, {3.5, 5, 3, 1}}},
+//  }},
 };

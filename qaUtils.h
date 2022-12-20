@@ -87,7 +87,7 @@ void saveHists(filteredDF &dd, vector <pair <vector<string>, TH1DModel>> &h1Mode
 //  hists2d.end()->second->DrawClone("colz");
 }
 
-void unfoldTH2 (RResultPtr<::TH2D> _h2, string projectionAxis="x", int rebinX=1, int rebinY=1, int firstBin=1, int lastBin=-1, bool log=true, const char *format="\%.0f")
+void unfoldTH2 (TH2 *_h2, string projectionAxis="x", int rebinX=1, int rebinY=1, int firstBin=1, int lastBin=-1, bool log=true, const char *format="\%.0f")
 {
   auto h2=(TH2*)_h2->Clone();
   h2->RebinX(rebinX);
@@ -133,7 +133,7 @@ void unfoldTH2 (RResultPtr<::TH2D> _h2, string projectionAxis="x", int rebinX=1,
     h->Draw();
     hs->Add(h);
   }
-  c->Write();
-  hs->Write();
+//  c->Write();
+//  hs->Write();
   delete h2;
 }
