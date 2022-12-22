@@ -112,7 +112,8 @@ void unfoldTH2 (TH2 *_h2, string projectionAxis="x", int rebinX=1, int rebinY=1,
   if (lastBin<0) 
     lastBin=axis->GetNbins();
   auto hs=new THStack(Form("hs_%s_log%i", h2->GetName(), log), h2->GetTitle());
-  auto c=new TCanvas(Form("c_%s_log%i", h2->GetName(), log), h2->GetTitle(), 800, 600);
+//  auto c=new TCanvas(Form("c_%s_log%i", h2->GetName(), log), h2->GetTitle(), 800, 600);
+  auto c=gPad;
   int npads=lastBin-firstBin+1;
   int npadsx = int (ceil (sqrt (npads)));
   int npadsy = int (ceil (1. * npads / npadsx));

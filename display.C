@@ -19,6 +19,7 @@ void drawPad(histSettings setting, vector<string> filteredNames, vector<vector <
 
 void display(const char *trendFilePath="qa.root", const char *currentFilePath="")
 {
+  gStyle->SetOptStat(111111);
   trendFile=new TFile(trendFilePath, "read");
   currentFile=new TFile(currentFilePath, "read");
   auto dc = new TDialogCanvas("canvases", "canvases", 50, 50, canvasWidth, canvasHeight);
@@ -74,10 +75,28 @@ void drawCanvas(const string &histSettingName)
         unfoldTH2(dynamic_cast<TH2*>(testObj), axis); 
       }
       else
-        drawPad<TH2,THStack>(setting, filteredNames, captures, trendFile, currentFile);
+        dynamic_cast<TH2*>(testObj)->Draw(setting.drawOption.c_str());
+//        drawPad<TH2,THStack>(setting, filteredNames, captures, trendFile, currentFile);
     }
     else if(dynamic_cast<TH1*>(testObj))
       drawPad<TH1,THStack>(setting, filteredNames, captures, trendFile, currentFile); 
+    double lineX[2]={gPad->GetUxmin(), gPad->GetUxmax()};
+    for (int j=0;j<setting.lines.size();j++)
+    {
+      auto &ls=setting.lines.at(j); 
+      double lineY[2]={ls.y,ls.y};
+      auto line=new TGraph(2, lineX, lineY);
+      line->SetLineColor(ls.color);
+      line->SetLineWidth(ls.width);
+      line->SetLineStyle(ls.style);
+      line->Draw("same");
+    }
+    if(setting.log.find("x")<setting.log.size()) 
+      gPad->SetLogx();
+    if(setting.log.find("y")<setting.log.size()) 
+      gPad->SetLogy();
+    if(setting.log.find("z")<setting.log.size()) 
+      gPad->SetLogz();
   }
 }
 
@@ -85,7 +104,7 @@ template <typename T, typename MT>
 void drawPad(histSettings setting, vector<string> filteredNames, vector<vector <string>> captures, TFile *trendFile, TFile *currentFile)
 {
   int nHists=filteredNames.size();
-  auto leg=new TLegend(0.85,1-0.07*nHists,.99,1);
+  auto leg=new TLegend(0.63,0.9-0.07*nHists,0.78,0.9);
   leg->SetFillColor(0);
   auto firstObj=dynamic_cast<T*>(trendFile->Get(filteredNames.at(0).c_str()));
   auto multi=new MT(setting.name.c_str(), Form("%s;%s;%s", setting.name.c_str(), firstObj->GetXaxis()->GetTitle(), firstObj->GetYaxis()->GetTitle()));
@@ -112,7 +131,7 @@ void drawPad(histSettings setting, vector<string> filteredNames, vector<vector <
     trend->GetXaxis()->SetNdivisions(nDivisions);
     //trend->GetXaxis()->SetRangeUser(trend->GetPointX(0), trend->GetXaxis()->GetXmax());
     //trend->SetDrawOption(setting.drawOption.c_str());
-    multi->Add(trend);
+    multi->Add(trend, "sames");
     string entryLabel;
     for (auto &cap:captures.at(j))
     {
@@ -128,27 +147,10 @@ void drawPad(histSettings setting, vector<string> filteredNames, vector<vector <
       current->SetMarkerColor(color);
       current->SetMarkerSize(currentMarkerSize);
       current->SetMarkerStyle(currentMarkerStyle);
-      multi->Add(current);
+      multi->Add(current, "sames");
     }
   }
   multi->Draw(setting.drawOption.c_str());
   if(filteredNames.size()>1)
     leg->Draw();
-  double lineX[2]={gPad->GetUxmin(), gPad->GetUxmax()};
-  for (int j=0;j<setting.lines.size();j++)
-  {
-    auto &ls=setting.lines.at(j); 
-    double lineY[2]={ls.y,ls.y};
-    auto line=new TGraph(2, lineX, lineY);
-    line->SetLineColor(ls.color);
-    line->SetLineWidth(ls.width);
-    line->SetLineStyle(ls.style);
-    line->Draw("same");
-  }
-  if(setting.log.find("x")<setting.log.size()) 
-    gPad->SetLogx();
-  if(setting.log.find("y")<setting.log.size()) 
-    gPad->SetLogy();
-  if(setting.log.find("z")<setting.log.size()) 
-    gPad->SetLogz();
 }

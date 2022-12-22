@@ -1,11 +1,37 @@
 #include "qaUtils.h"
 
-int triggerPeak (TClonesArray digis)
+int peakBinMin=250, peakBinMax=320;
+
+int triggerPeak(TClonesArray digis)
 {
   auto digit=(BmnTrigWaveDigit*)digis.At(0);
   int peak=0;
-  if(digit) peak=digit->GetPeak();
+  auto values=digit->GetShortValue();
+  for (Int_t i = peakBinMin; i < digit->GetNSamples() && i < peakBinMax; ++i)
+    if (values[i] > peak) 
+      peak = values[i];
   return peak;
+}
+
+int triggerIntegral(TClonesArray digis)
+{
+  auto digit=(BmnTrigWaveDigit*)digis.At(0);
+  int integral=0;
+  auto values=digit->GetShortValue();
+  for (Int_t i = peakBinMin; i < digit->GetNSamples() && i < peakBinMax; ++i)
+    integral += values[i];
+  return integral;
+}
+
+short triggerPeakBin (TClonesArray digis)
+{
+  auto digit=(BmnTrigWaveDigit*)digis.At(0);
+  short peakBin=-1;
+  auto values=digit->GetShortValue();
+  for (Int_t i = 0; i < digit->GetNSamples(); ++i)
+    if (values[i] > peakBin) 
+      peakBin = i;
+  return peakBin;
 }
 
 int triggerTime (TClonesArray digis)
@@ -40,7 +66,7 @@ RVec<int> FHCalDigiX(RVec<BmnFHCalDigi> digis)
   return x;
 }
 
-void plotTriggers (string inDigi="mpd_run_Top_6822*.root", const char *out="qa.root")
+void plotTriggers (string inDigi="digi/mpd_run_Top_6822*.root", const char *out="qa.root")
 {
   TChain *chainDigi=makeChain(inDigi, "bmndata");
   cout << "Digi: " << chainDigi->GetEntries() << " events\n";
@@ -64,7 +90,7 @@ void plotTriggers (string inDigi="mpd_run_Top_6822*.root", const char *out="qa.r
     cout << chainDigi->GetCurrentFile()->GetName();
 
   auto dd=d
-//    .Range(0,1000)
+    //.Range(0,1000)
     .Filter("BmnEventHeader.fEventType==1")
     .Define("runId",[](FairEventHeader h){return h.GetRunId();}, {"BmnEventHeader."})
     .Define("evtId","BmnEventHeader.fEventId")
@@ -77,7 +103,7 @@ void plotTriggers (string inDigi="mpd_run_Top_6822*.root", const char *out="qa.r
     .Define("SImodId", "SI.fMod")
     .Define("SImodTime", "SI.fTime")
     .Define("SImodAmp", "SI.fAmp")
-    .Define("SIgoodHit", "abs(SImodTime-450)<50")
+    .Define("SIgoodHit", "abs(SImodTime-2000)<100")
     .Define("SIcount", "Sum(SIgoodHit)")
     .Define("SIamp", "Sum(SImodAmp*SIgoodHit)")
     .Define("BDSIcount", "BDcount+SIcount")
@@ -87,14 +113,15 @@ void plotTriggers (string inDigi="mpd_run_Top_6822*.root", const char *out="qa.r
     .Define("Hodo", "Sum(HodoDigi.fSignal)")
 //    .Define("ScWall", "Sum(ScWallDigi.fSignal)")
     .Define("TOF400time", "TOF400.fTime")
-    .Define("TOF400goodHit", "abs(TOF400.fTime-1400)<100")
+    .Define("TOF400goodHit", "abs(TOF400.fTime-1450)<150")
     .Define("nTOF400", "Sum(TOF400goodHit)")
     .Define("TOF700time", "TOF700.fTime")
-    .Define("TOF700goodHit", "abs(TOF700.fTime-1800)<200")
+    .Define("TOF700goodHit", "abs(TOF700.fTime-1850)<200")
     .Define("nTOF700", "Sum(TOF700goodHit)")
     .Define("DCHtime", "DCH.fTime")
-    .Define("DCHgoodHit", "abs(DCH.fTime-750)<250")
+    .Define("DCHgoodHit", "abs(DCH.fTime-800)<300")
     .Define("nDCH", "Sum(DCHgoodHit)")
+    .Define("BC1L", "BmnEventHeader.fInputsBR>>0&1")
     .Define("pBT", "BmnEventHeader.fInputsBR>>1&1")
     .Define("BT", "BmnEventHeader.fInputsBR>>2&1")
     .Define("NiT", "BmnEventHeader.fInputsBR>>3&1")
@@ -107,6 +134,8 @@ void plotTriggers (string inDigi="mpd_run_Top_6822*.root", const char *out="qa.r
     dd=dd
       .Define(Form("TQDC_%speak", det), triggerPeak, {Form("TQDC_%s", det)})
       .Define(Form("TQDC_%stime", det), triggerTime, {Form("TQDC_%s", det)})
+      .Define(Form("TQDC_%sintegral", det), triggerIntegral, {Form("TQDC_%s", det)})
+      .Define(Form("TQDC_%speakBin", det), triggerPeakBin, {Form("TQDC_%s", det)})
   ;
   for (auto &det:{"BC2AT", "BC2AB"})
     dd=dd
@@ -114,19 +143,19 @@ void plotTriggers (string inDigi="mpd_run_Top_6822*.root", const char *out="qa.r
       .Define(Form("%stime", det), Form("%s.fTime", det));
 
   dd=dd
-    .Filter("abs(TQDC_FDtime-2200)<100")
-    .Filter("TQDC_BC1S.GetEntries()==1")
-    .Filter("TQDC_BC2AS.GetEntries()==1")
-    .Filter("TQDC_FD.GetEntries()==1")
-    .Filter("TQDC_VCS.GetEntries()<=1")
-    .Filter("abs(TQDC_BC1Stime-2050)<100")
+    //.Filter("abs(TQDC_FDtime-2200)<100")
+    //.Filter("abs(TQDC_BC1Stime-2050)<100")
+    //.Filter("abs(TQDC_BC1SpeakBin-285)<35")
+    //.Filter("abs(TQDC_BC2ASpeakBin-285)<35")
+    //.Filter("abs(TQDC_VCSpeakBin-285)<35")
+    //.Filter("abs(TQDC_FDpeakBin-285)<35")
   ; 
   dd.Foreach([](uint evtId){if (evtId % 1000 == 0) cout << "\r" << evtId;}, {"evtId"}); // progress display 
   cout << endl;
 
   for (auto &cut:{"BT", "NiT", "MBT", "CCT1", "CCT2"})
   {
-    const int nBins=100, nTOF400Max=200, nTOF700Max=200, nDCHMax=200;
+    const int nBins=100, nTOF400Max=100, nTOF700Max=100, nDCHMax=2500, BDcountMax=40, SIcountMax=64;
     const float HodoMax=7000, TQDC_FDMax=6000, tFHCalMax=1000, nFHCalMax=500, SIampMax=11000, BDampMax=500;
 
     vector <pair <vector<string>, TH1DModel>> h1Models = {
@@ -136,37 +165,45 @@ void plotTriggers (string inDigi="mpd_run_Top_6822*.root", const char *out="qa.r
     };
 
     for (auto& name:dd.GetDefinedColumnNames())
+    {
       h1Models.push_back({{name, cut}, {"", "", 0, 0, 0}});
+    }
 
     vector <pair <vector<string>, TH2DModel>> h2Models = {
-      {{"BDmodId", "BDmodAmp", cut},    {"", "", 40, 0, 40, nBins, 0, 50}},
-      {{"SImodId", "SImodAmp", cut},    {"", "", 64, 0, 64, nBins, 0, 250}},
-      {{"BDcount", "nFHCal", cut},    {"", "", 40, 0, 40, nBins, 0, nFHCalMax}},
-      {{"BDcount", "tFHCal", cut},    {"", "", 40, 0, 40, nBins, 0, tFHCalMax}},
-      {{"BDcount", "Hodo", cut},      {"", "", 40, 0, 40, nBins, 0, HodoMax}},
-      {{"BDcount", "TQDC_FDpeak", cut},      {"", "", 40, 0, 40, nBins, 0, TQDC_FDMax}},
-      {{"BDcount", "Hodo", cut}, {"", "", 40, 0, 40, nBins, 0, HodoMax}},
-      {{"BDcount", "tFHCal", cut}, {"", "", 40, 0, 40, nBins, 0, tFHCalMax}},
-      {{"BDcount", "nFHCal", cut}, {"", "", 40, 0, 40, nBins, 0, nFHCalMax}},
-      {{"BDcount", "TQDC_FDpeak", cut}, {"", "", 40, 0, 40, nBins, 0, TQDC_FDMax}},
+      {{"TQDC_BC1Speak", "TQDC_BC1Sintegral", cut}, {"", "", nBins, 0, 20000, nBins, -20000, 80000}},
+      {{"TQDC_BC2ASpeak", "TQDC_BC2ASintegral", cut}, {"", "", nBins, 0, 20000, nBins, -20000, 80000}},
+      {{"TQDC_VCSpeak", "TQDC_VCSintegral", cut}, {"", "", nBins, 0, 20000, nBins, -20000, 80000}},
+      {{"TQDC_FDpeak", "TQDC_FDintegral", cut}, {"", "", nBins, 0, 20000, nBins, -20000, 80000}},
+      {{"BDmodId", "BDmodAmp", cut},    {"", "", BDcountMax, 0, BDcountMax, nBins, 0, 50}},
+      {{"SImodId", "SImodAmp", cut},    {"", "", SIcountMax, 0, SIcountMax, nBins, 0, 250}},
+      {{"BDmodId", "BDmodTime", cut},    {"", "", BDcountMax, 0, BDcountMax, nBins, 0, 3500}},
+      {{"SImodId", "SImodTime", cut},    {"", "", SIcountMax, 0, SIcountMax, nBins, 0, 3500}},
+      {{"BDcount", "nFHCal", cut},    {"", "", BDcountMax, 0, BDcountMax, nBins, 0, nFHCalMax}},
+      {{"BDcount", "tFHCal", cut},    {"", "", BDcountMax, 0, BDcountMax, nBins, 0, tFHCalMax}},
+      {{"BDcount", "Hodo", cut},      {"", "", BDcountMax, 0, BDcountMax, nBins, 0, HodoMax}},
+      {{"BDcount", "TQDC_FDpeak", cut},      {"", "", BDcountMax, 0, BDcountMax, nBins, 0, TQDC_FDMax}},
+      {{"BDcount", "Hodo", cut}, {"", "", BDcountMax, 0, BDcountMax, nBins, 0, HodoMax}},
+      {{"BDcount", "tFHCal", cut}, {"", "", BDcountMax, 0, BDcountMax, nBins, 0, tFHCalMax}},
+      {{"BDcount", "nFHCal", cut}, {"", "", BDcountMax, 0, BDcountMax, nBins, 0, nFHCalMax}},
+      {{"BDcount", "TQDC_FDpeak", cut}, {"", "", BDcountMax, 0, BDcountMax, nBins, 0, TQDC_FDMax}},
       {{"BDamp", "Hodo", cut}, {"", "",   nBins, 0, BDampMax, nBins, 0, HodoMax}},
       {{"BDamp", "tFHCal", cut}, {"", "", nBins, 0, BDampMax, nBins, 0, tFHCalMax}},
       {{"BDamp", "nFHCal", cut}, {"", "", nBins, 0, BDampMax, nBins, 0, nFHCalMax}},
       {{"BDamp", "TQDC_FDpeak", cut}, {"", "", nBins, 0, BDampMax, nBins, 0, TQDC_FDMax}},
-      {{"SIcount", "Hodo", cut}, {"", "", 64, 0, 64, nBins, 0, HodoMax}},
-      {{"SIcount", "tFHCal", cut}, {"", "", 64, 0, 64, nBins, 0, tFHCalMax}},
-      {{"SIcount", "nFHCal", cut}, {"", "", 64, 0, 64, nBins, 0, nFHCalMax}},
-      {{"SIcount", "TQDC_FDpeak", cut}, {"", "", 64, 0, 64, nBins, 0, TQDC_FDMax}},
+      {{"SIcount", "Hodo", cut}, {"", "", SIcountMax, 0, SIcountMax, nBins, 0, HodoMax}},
+      {{"SIcount", "tFHCal", cut}, {"", "", SIcountMax, 0, SIcountMax, nBins, 0, tFHCalMax}},
+      {{"SIcount", "nFHCal", cut}, {"", "", SIcountMax, 0, SIcountMax, nBins, 0, nFHCalMax}},
+      {{"SIcount", "TQDC_FDpeak", cut}, {"", "", SIcountMax, 0, SIcountMax, nBins, 0, TQDC_FDMax}},
       {{"SIamp", "Hodo", cut}, {"", "",   nBins, 0, SIampMax, nBins, 0, HodoMax}},
       {{"SIamp", "tFHCal", cut}, {"", "", nBins, 0, SIampMax, nBins, 0, tFHCalMax}},
       {{"SIamp", "nFHCal", cut}, {"", "", nBins, 0, SIampMax, nBins, 0, nFHCalMax}},
-      {{"SIamp", "TQDC_FDpeak", cut}, {"", "", 40, 0, SIampMax, nBins, 0, TQDC_FDMax}},
+      {{"SIamp", "TQDC_FDpeak", cut}, {"", "", BDcountMax, 0, SIampMax, nBins, 0, TQDC_FDMax}},
       {{"tFHCal", "Hodo", cut}, {"", "", nBins, 0, tFHCalMax, nBins, 0, HodoMax}},
       {{"nFHCal", "Hodo", cut}, {"", "", nBins, 0, nFHCalMax, nBins, 0, HodoMax}},
       {{"TQDC_FDpeak", "Hodo", cut},   {"", "", nBins, 0, TQDC_FDMax, nBins, 0, HodoMax}},
       {{"TQDC_FDpeak", "tFHCal", cut}, {"", "", nBins, 0, TQDC_FDMax, nBins, 0, tFHCalMax}},
       {{"TQDC_FDpeak", "nFHCal", cut}, {"", "", nBins, 0, TQDC_FDMax, nBins, 0, nFHCalMax}},
-      {{"tFHCal", "nFHCal", cut}, {"", "", 40, 0, tFHCalMax, nBins, 0, nFHCalMax}},
+      {{"tFHCal", "nFHCal", cut}, {"", "", BDcountMax, 0, tFHCalMax, nBins, 0, nFHCalMax}},
       {{"nTOF400", "TQDC_FDpeak", cut}, {"", "", nTOF400Max, 0 , nTOF400Max, nBins, 0, TQDC_FDMax}},
       {{"nTOF400", "tFHCal", cut}, {"", "", nTOF400Max, 0 , nTOF400Max, nBins, 0, tFHCalMax}},
       {{"nTOF400", "nFHCal", cut}, {"", "", nTOF400Max, 0 , nTOF400Max, nBins, 0, nFHCalMax}},
@@ -176,6 +213,13 @@ void plotTriggers (string inDigi="mpd_run_Top_6822*.root", const char *out="qa.r
       {{"nDCH", "TQDC_FDpeak", cut}, {"", "", nDCHMax, 0 , nDCHMax, nBins, 0, TQDC_FDMax}},
       {{"nDCH", "tFHCal", cut}, {"", "", nDCHMax, 0 , nDCHMax, nBins, 0, tFHCalMax}},
       {{"nDCH", "nFHCal", cut}, {"", "", nDCHMax, 0 , nDCHMax, nBins, 0, nFHCalMax}},
+      {{"nDCH", "nTOF700", cut}, {"", "", nDCHMax, 0 , nDCHMax, nTOF700Max, 0, nTOF700Max}},
+      {{"nDCH", "nTOF400", cut}, {"", "", nDCHMax, 0 , nDCHMax, nTOF400Max, 0, nTOF400Max}},
+      {{"BDcount", "nTOF700", cut}, {"", "", BDcountMax, 0 , BDcountMax, nTOF700Max, 0, nTOF700Max}},
+      {{"BDcount", "nTOF400", cut}, {"", "", BDcountMax, 0 , BDcountMax, nTOF400Max, 0, nTOF400Max}},
+      {{"BDamp", "nTOF400", cut}, {"", "", nBins, 0 , BDampMax, nTOF400Max, 0, nTOF400Max}},
+      {{"BDamp", "nTOF700", cut}, {"", "", nBins, 0 , BDampMax, nTOF700Max, 0, nTOF700Max}},
+      {{"nTOF700", "nTOF400", cut}, {"", "", nTOF700Max, 0 , nTOF700Max, nTOF400Max, 0, nTOF400Max}},
     };                                                              
 
     saveHists(dd, h1Models, h2Models, outFile.GetDirectory(""));

@@ -4,8 +4,9 @@
 . /cvmfs/nica.jinr.ru/centos7/bmnroot/dev/bmnroot_config.sh
  
 rawPath=/eos/nica/bmn/exp/raw/run8/beam/BMN_2022
-firstRawFile=/eos/nica/bmn/exp/raw/run8/beam/BMN_2022/mpd_run_Top_6705_ev0_p0.data
+firstRawFile=/eos/nica/bmn/exp/raw/run8/beam/BMN_2022/mpd_run_Top_6939_ev0_p0.data
 digiPath=/scratch2/ogolosov/bmndata/run8/digi
+digiPathEos=/eos/nica/mpd/users/ogolosov/bmndata/run8/digi
 qaPath=/scratch2/ogolosov/bmndata/run8/qa/trigger
 decoderMacro=BmnDataToRoot.C
 qaMacro=plotTriggers.C
@@ -17,10 +18,11 @@ listRaw=raw.list
 listDigiPrev=digiPrev.list
 listDigiCurr=digiCurr.list
 listQa=qa.list
-nEvents=10000
+nEvents=0
 sleepDuration=10 #sec
 
 mkdir -pv $digiPath 
+mkdir -pv $digiPathEos 
 mkdir -pv $qaPath 
 touch $listDigiPrev  
 
@@ -29,15 +31,16 @@ while [ true ];do
   echo $firstRawFile > $listRaw
   find $rawPath -name '*.data' -newer $firstRawFile >> $listRaw
   for rawFile in $(cat $listRaw);do
-    digiFile=$digiPath/$(basename $rawFile)
+    digiFile=$(basename $rawFile)
     digiFile=${digiFile/\.data/.root}
-    if [ ! -e $digiFile ];then
-      root -b -l -q $decoderMacro"(\"$rawFile\", \"$digiFile\", $nEvents)"
+    if [ ! -e $digiPathEos/$digiFile ];then
+      root -b -l -q $decoderMacro"(\"$rawFile\", \"$digiPath/$digiFile\", $nEvents)"
+      mv $digiPath/$digiFile $digiPathEos
     fi
   done
   
   #run QA
-  ls $digiPath/* > $listDigiCurr
+  ls $digiPathEos/* > $listDigiCurr
   if [ $(cat $listDigiCurr | wc -w) -gt $(cat $listDigiPrev | wc -w) ]; then # new digi files added
     runIdPrev=none
     for digiFile in $(cat $listDigiCurr);do
@@ -46,7 +49,7 @@ while [ true ];do
       if [ $(cat $listDigiCurr | grep $runId -c) -gt $(cat $listDigiPrev | grep $runId -c) ] && [ $runId != $runIdPrev ];then
         # new files added for runId and it has not been analyzed 
         qaFile=$qaPath/$(echo $digiFileBase | grep -P '.*\d{4,5}' -o).qa.root
-        root -b -l -q $qaMacro"(\"$digiPath/*_${runId}_*.root\", \"$qaFile\")"
+        root -b -l -q $qaMacro"(\"$digiPathEos/*_${runId}_*.root\", \"$qaFile\")"
         runIdPrev=$runId
       fi
     done 
