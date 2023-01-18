@@ -34,9 +34,9 @@ vector <string> buildObjectList (vector <string> &objectNames, TDirectory *folde
   for (auto key : *keys)
   {
     string objectName = key -> GetName();
-    if (objectName.find("run")==0)
-      continue;
     auto object = dynamic_cast <TKey*> (key) -> ReadObj ();
+    if(!object)
+      continue;
     string className = object -> ClassName();
     if (!(className.find("3") < className.size()) && 
       (className.find("TH2")==0 || className.find("TH1")==0 || className.find("TProfile")==0 || className.find("TGraph")==0))

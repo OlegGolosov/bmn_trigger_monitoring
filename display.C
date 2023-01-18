@@ -131,7 +131,8 @@ void drawPad(histSettings setting, vector<string> filteredNames, vector<vector <
     trend->GetXaxis()->SetNdivisions(nDivisions);
     //trend->GetXaxis()->SetRangeUser(trend->GetPointX(0), trend->GetXaxis()->GetXmax());
     //trend->SetDrawOption(setting.drawOption.c_str());
-    multi->Add(trend, "sames");
+    //multi->Add(trend, "sames");
+    multi->Add(trend);
     string entryLabel;
     for (auto &cap:captures.at(j))
     {
@@ -151,6 +152,13 @@ void drawPad(histSettings setting, vector<string> filteredNames, vector<vector <
     }
   }
   multi->Draw(setting.drawOption.c_str());
+  string xAxisTitle=multi->GetXaxis()->GetTitle();
+  if(xAxisTitle=="time")
+  {
+    multi->GetXaxis()->SetTimeDisplay(1);
+    multi->GetXaxis()->SetTimeFormat("%d/%m-%H:%M:%S");
+    multi->GetXaxis()->SetNdivisions(507);
+  }
   if(filteredNames.size()>1)
     leg->Draw();
 }

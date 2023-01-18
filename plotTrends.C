@@ -5,7 +5,7 @@ vector <float> getRunIds(vector<TFile*> &files, vector <string> &histNames, stri
 vector <float> getRunTimes(vector<TFile*> &files);
 void plot(vector <TFile*> &files, vector<string> &histnames, vector<float> &xAxis, const char *xAxisTitle, bool isTimeGraph, TDirectoryFile *outDir);
 
-void plotTrends(string fileListPath="qa.list", string pattern=".*"/*"ref(\\d+)_GEM.*"*/, const char *outFilePath="trends.root")
+void plotTrends(string fileListPath="qa.list", string pattern="TQDC_BC.*"/*"ref(\\d+)_GEM.*"*/, const char *outFilePath="trends.root")
 {
   vector <TFile*> files=makeFileVector(fileListPath);
   vector <string> histNames;

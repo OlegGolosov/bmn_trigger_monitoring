@@ -5,6 +5,8 @@ int peakBinMin=250, peakBinMax=320;
 int triggerPeak(TClonesArray digis)
 {
   auto digit=(BmnTrigWaveDigit*)digis.At(0);
+  if (!digit)
+    return -999;
   int peak=0;
   auto values=digit->GetShortValue();
   for (Int_t i = peakBinMin; i < digit->GetNSamples() && i < peakBinMax; ++i)
@@ -16,6 +18,8 @@ int triggerPeak(TClonesArray digis)
 int triggerIntegral(TClonesArray digis)
 {
   auto digit=(BmnTrigWaveDigit*)digis.At(0);
+  if (!digit)
+    return -999;
   int integral=0;
   auto values=digit->GetShortValue();
   for (Int_t i = peakBinMin; i < digit->GetNSamples() && i < peakBinMax; ++i)
@@ -26,6 +30,8 @@ int triggerIntegral(TClonesArray digis)
 short triggerPeakBin (TClonesArray digis)
 {
   auto digit=(BmnTrigWaveDigit*)digis.At(0);
+  if (!digit)
+    return -999;
   short peakBin=-1;
   auto values=digit->GetShortValue();
   for (Int_t i = 0; i < digit->GetNSamples(); ++i)
@@ -66,7 +72,7 @@ RVec<int> FHCalDigiX(RVec<BmnFHCalDigi> digis)
   return x;
 }
 
-void plotTriggers (string inDigi="digi/mpd_run_Top_6822*.root", const char *out="qa.root")
+void plotTriggers (string inDigi="digi/mpd_run_Top_6822*.root", const char *out="qa.root", bool applyCuts=false)
 {
   TChain *chainDigi=makeChain(inDigi, "bmndata");
   cout << "Digi: " << chainDigi->GetEntries() << " events\n";
@@ -142,18 +148,21 @@ void plotTriggers (string inDigi="digi/mpd_run_Top_6822*.root", const char *out=
       .Define(Form("%samp", det), Form("%s.fAmp", det))
       .Define(Form("%stime", det), Form("%s.fTime", det));
 
-  dd=dd
-    //.Filter("abs(TQDC_FDtime-2200)<100")
-    //.Filter("abs(TQDC_BC1Stime-2050)<100")
-    //.Filter("abs(TQDC_BC1SpeakBin-285)<35")
-    //.Filter("abs(TQDC_BC2ASpeakBin-285)<35")
-    //.Filter("abs(TQDC_VCSpeakBin-285)<35")
-    //.Filter("abs(TQDC_FDpeakBin-285)<35")
-  ; 
+  if (applyCuts)
+    dd=dd
+//      .Filter("abs(TQDC_FDtime-2200)<100")
+      .Filter("abs(TQDC_BC1Stime-2050)<100")
+      .Filter("abs(TQDC_BC1Sintegral-25000)<25000")
+//      .Filter("abs(TQDC_BC1SpeakBin-285)<35")
+//      .Filter("abs(TQDC_BC2ASpeakBin-285)<35")
+//      .Filter("abs(TQDC_VCSpeakBin-285)<35")
+//      .Filter("abs(TQDC_FDpeakBin-285)<35")
+    ; 
+  
   dd.Foreach([](uint evtId){if (evtId % 1000 == 0) cout << "\r" << evtId;}, {"evtId"}); // progress display 
   cout << endl;
 
-  for (auto &cut:{"BT", "NiT", "MBT", "CCT1", "CCT2"})
+  for (auto &cut:{""/*,"BT", "NiT", "MBT", "CCT1", "CCT2"*/})
   {
     const int nBins=100, nTOF400Max=100, nTOF700Max=100, nDCHMax=2500, BDcountMax=40, SIcountMax=64;
     const float HodoMax=7000, TQDC_FDMax=6000, tFHCalMax=1000, nFHCalMax=500, SIampMax=11000, BDampMax=500;
