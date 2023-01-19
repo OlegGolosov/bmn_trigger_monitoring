@@ -13,26 +13,26 @@ struct histSettings
   string log=""; 
   vector<int> colors={1,2,4,6,3,5,7,8};
   vector<rangeLine> lines={};
-  vector<int> markerStyles={0};
-  vector<int> markerSizes={0};
+  vector<int> markerStyles={8};
+  vector<float> markerSizes={0.5};
   vector<int> lineStyles={1,1,1,1};
-  vector<int> lineWidths={3};
+  vector<float> lineWidths={3};
 };
 
 map <string, vector <histSettings>> 
 histSettingsMap=
 {
-  {"time/BC", {
-    {"time/h_TQDC_(BC1T|BC1B|BC1S)peak_mean", "apl", ""},
-    {"time/h_TQDC_(BC1T|BC1B|BC1S)peak_RMS", "apl", ""},
-    {"time/h_TQDC_(BC2AT|BC2AB|BC2AS)peak_mean", "apl", ""},
-    {"time/h_TQDC_(BC2AT|BC2AB|BC2AS)peak_RMS", "apl", ""},
+  {"BC_time_trends", {
+    {"time/h_TQDC_(BC1T|BC1B|BC1S)peak_mean", "ap", ""},
+    {"time/h_TQDC_(BC1T|BC1B|BC1S)peak_RMS", "ap", ""},
+    {"time/h_TQDC_(BC2AT|BC2AB|BC2AS)peak_mean", "ap", ""},
+    {"time/h_TQDC_(BC2AT|BC2AB|BC2AS)peak_RMS", "ap", ""},
   }},
-  {"runId/BC", {
-    {"runId/h_TQDC_(BC1T|BC1B|BC1S)peak_mean", "apl", ""},
-    {"runId/h_TQDC_(BC1T|BC1B|BC1S)peak_RMS", "apl", ""},
-    {"runId/h_TQDC_(BC2AT|BC2AB|BC2AS)peak_mean", "apl", ""},
-    {"runId/h_TQDC_(BC2AT|BC2AB|BC2AS)peak_RMS", "apl", ""},
+  {"BC_runId_trends", {
+    {"runId/h_TQDC_(BC1T|BC1B|BC1S)peak_mean", "ap", ""},
+    {"runId/h_TQDC_(BC1T|BC1B|BC1S)peak_RMS", "ap", ""},
+    {"runId/h_TQDC_(BC2AT|BC2AB|BC2AS)peak_mean", "ap", ""},
+    {"runId/h_TQDC_(BC2AT|BC2AB|BC2AS)peak_RMS", "ap", ""},
   }},
   {"beamTimes", {
     {"h_TQDC_BC1Stime_(.*)", "nostack", "y"},

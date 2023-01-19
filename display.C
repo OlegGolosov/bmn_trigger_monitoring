@@ -12,12 +12,13 @@ TFile *trendFile, *currentFile;
 vector <string> histNames;
 
 int thisOrLast(vector<int> v, int i) {return v.size()>i ? v.at(i) : v.back();}
-void drawCanvas(const string &histSettingName, vector <string> &histNames);
+float thisOrLast(vector<float> v, int i) {return v.size()>i ? v.at(i) : v.back();}
+TCanvas* drawCanvas(const string &histSettingName);
 template <typename T, typename MT>
 void drawPad(histSettings setting, vector<string> filteredNames, vector<vector <string>> captures, TFile *trendFile, TFile *currentFile);
 
 
-void display(const char *trendFilePath="qa.root", const char *currentFilePath="")
+void display(const char *trendFilePath="qa.root", const char *currentFilePath="", const char *outputPath="display.root")
 {
   gStyle->SetOptStat(111111);
   trendFile=new TFile(trendFilePath, "read");
@@ -40,9 +41,14 @@ void display(const char *trendFilePath="qa.root", const char *currentFilePath=""
     b->Draw();
     i++;
   }
+
+  TFile f(outputPath, "recreate");
+  for (auto &name:{"BC_time_trends", "BC_runId_trends"})
+    drawCanvas(name)->Write();
+  f.Close();
 }
 
-void drawCanvas(const string &histSettingName)
+TCanvas* drawCanvas(const string &histSettingName)
 {
   auto hSettings=histSettingsMap.at(histSettingName);
   const char* canvasName=histSettingName.c_str();
@@ -98,6 +104,7 @@ void drawCanvas(const string &histSettingName)
     if(setting.log.find("z")<setting.log.size()) 
       gPad->SetLogz();
   }
+  return c; 
 }
 
 template <typename T, typename MT>
@@ -111,9 +118,9 @@ void drawPad(histSettings setting, vector<string> filteredNames, vector<vector <
   for (int j=0; j<nHists;j++)
   {
     string name=filteredNames.at(j);
-    int lineWidth=thisOrLast(setting.lineWidths, j);
+    float lineWidth=thisOrLast(setting.lineWidths, j);
     int lineStyle=thisOrLast(setting.lineStyles, j);
-    int markerSize=thisOrLast(setting.markerSizes, j);
+    float markerSize=thisOrLast(setting.markerSizes, j);
     int markerStyle=thisOrLast(setting.markerStyles, j);
     int color=thisOrLast(setting.colors, j);
     auto trend=dynamic_cast<T*>(trendFile->Get(name.c_str()));
