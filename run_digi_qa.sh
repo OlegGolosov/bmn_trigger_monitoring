@@ -33,7 +33,7 @@ mkdir -pv $qaPathEos
 . /cvmfs/nica.jinr.ru/centos7/bmnroot/dev/bmnroot_config.sh
 
 while [ true ];do
-  if [ $(qstat | grep "$jobName.*qw" -c) == 0 ];then
+  if [ $(qstat | grep "$jobName .* qw" -c) == 0 ];then
     rm $listUndone
     find $rawPath -type f -newermt "$startTime" -name "${pattern}.data" -size +1G > $listRaw
     firstRun=$(echo $(basename $(head -n1 $listRaw)) | grep -E [0-9]{4} -o | awk '{print $1}')

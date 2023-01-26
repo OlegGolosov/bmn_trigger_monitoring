@@ -13,9 +13,11 @@ qa=${qa/.data/.qa.root}
 if [ ! -e $digiPathEos/$digi ]; then
   time root -l -b -q $digiMacro"(\"$raw\",\"$digiPathScratch/$digi\",$nEvents)"
   mv -v $digiPathScratch/$digi $digiPathEos
+  chmod 644 $digiPathEos/$digi
 fi
 
 if [ -e $digiPathEos/$digi ]; then
   time root -l -b -q $qaMacro"(\"$digiPathEos/$digi\",\"$qaPathScratch/$qa\", true)"
   mv -v $qaPathScratch/$qa $qaPathEos
+  chmod 644 $qaPathEos/$qa
 fi
